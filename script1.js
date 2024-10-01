@@ -289,8 +289,9 @@ function renderTable() {
         tableJSON[1].originalData = filtered_data;
       }
 
-      //this is deleting from main JSON.data
+      //updating in both the JSON's, as we are adding data to the pageData from main data everytime we click on add
       tableJSON[1].pageData.splice(index, 1);
+      tableJSON[1].data.splice(index, 1);
       renderTable(); //Re-render table data
     });
   });
