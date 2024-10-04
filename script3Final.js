@@ -16,7 +16,6 @@ let tableJSON = [
         lName: "Last Name",
         desig: "Designation",
         area: "Address",
-        action: "Action",
       },
     ],
   },
@@ -119,9 +118,16 @@ function generateTable(table) {
         th.querySelector(".fa-arrow-up").style.display = "inline-block";
       }
     });
-
+    //append headers
     headerRow.appendChild(th);
   });
+
+  //for action
+  const actionHeader = document.createElement("th");
+  const actionText = document.createTextNode("Action");
+  actionHeader.appendChild(actionText);
+  headerRow.appendChild(actionHeader);
+
   // Append the <thead> to the table
   table.appendChild(thead);
   // Create <tbody>
@@ -162,6 +168,7 @@ function renderTable() {
   console.log("curr:", currentPage);
   let end = start + rowsPerPage;
   //   const pageData = tableJSON[1].pageData.slice(start, end);
+  prevAndNext(); //after updating current page caaling render inside render calling prevAndNext(), to update page active.
 
   for (
     let index = start;
@@ -169,7 +176,6 @@ function renderTable() {
     index++
   ) {
     const data = tableJSON[1].data[index]; // Get the current row from the original data
-    console.log(data);
     /**=> You're correct that in the current approach, the text is not explicitly contained within a separate container element inside the cell. When we set firstNameCell.textContent = data.fName;, the text is treated as a "text node" (a child of the td element). Every td element can contain text directly as a child node without needing an explicit wrapper like a <span> or <div>.
     => To address your concern and make things clearer, we can wrap the text in a container element like a span. This way, the text and input can be more explicitly separated and managed. Let's modify the code to wrap the text inside a span element. */
 
@@ -324,7 +330,8 @@ function makeEditable(cell, index, key, span, input) {
 
 //adding into table
 add.addEventListener("click", addData);
-function addData() {
+function addData(e) {
+  e.preventDefault();
   //Get input elements
   const fName = document.getElementById("fname").value;
   const lName = document.getElementById("lname").value;
@@ -350,6 +357,7 @@ function addData() {
     (tableBody.rows.length > 1 && (tableJSON[1].data.length - 1) % 5 === 0)
   ) {
     pagination();
+    prevAndNext();
   }
 
   // Render the table (it will only show the first 5 records for the current page)
@@ -479,6 +487,19 @@ searchButton.addEventListener("click", () => {
         tableJSON[1].data[index][dropValue].toLowerCase() == inputValue
     );
     tableJSON[1].data = filtered_data;
+
+    ////////////////////////////
+    //when we filter, if we are in another page, we need to move to page 0.
+    currentPage = 0;
+    //removing current active and adding to first page
+    const currentActive = document.querySelector(".page-numbers a.active");
+    if (currentActive) currentActive.classList.remove("active");
+
+    const pageNumbers = document.querySelector(".page-numbers");
+    // Get the first child element
+    const firstElement = pageNumbers.firstElementChild;
+    firstElement.classList.add("active");
+    ////////////////////////
     renderTable();
   }
 });
@@ -496,11 +517,11 @@ clearButton.addEventListener("click", () => {
 });
 
 /////////////////////////////////////////////////////////////////////
+
 function pagination() {
   // Clear any previous pagination links
   pageNumbers.innerHTML = "";
-
-  const totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+  let totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
   for (let i = 0; i < totalPages; i++) {
     console.log("i", i);
     const a = document.createElement("a");
@@ -515,6 +536,7 @@ function pagination() {
     pageNumbers.appendChild(a);
   }
   addAnchorListeners();
+  // prevAndNext();
 }
 
 function addAnchorListeners() {
@@ -539,3 +561,59 @@ function addAnchorListeners() {
     });
   });
 }
+
+//////////////////////////////////////////////////next and prev
+const prev = document.querySelector(".prev");
+const next = document.querySelector(".next");
+function prevAndNext() {
+  const totalRows = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+  const anchors = document.querySelectorAll(".page-numbers a");
+
+  if (totalRows <= 1) {
+    //when only one page is there
+    prev.style.cursor = "not-allowed";
+    next.style.cursor = "not-allowed";
+  } else if (
+    totalRows == anchors.length &&
+    currentPage === anchors.length - 1
+  ) {
+    //two pages and active in last page
+    prev.style.cursor = "pointer";
+    next.style.cursor = "not-allowed";
+  } else if (totalRows > 1 && currentPage === 0) {
+    //there are two pages, but active is in first page.
+    prev.style.cursor = "not-allowed";
+    next.style.cursor = "pointer";
+  } else {
+    //remaining all are pointers
+    prev.style.cursor = "pointer";
+    next.style.cursor = "pointer";
+  }
+}
+
+prev.addEventListener("click", () => {
+  if (currentPage > 0) {
+    // Remove 'active' class from the currently active anchor
+    const currentActive = document.querySelector(".page-numbers a.active");
+    if (currentActive) currentActive.classList.remove("active");
+    // Get the previous sibling element
+    const previousElement = currentActive.previousElementSibling;
+    previousElement.classList.add("active");
+    currentPage--;
+    renderTable();
+    console.log(currentActive);
+  }
+});
+
+next.addEventListener("click", () => {
+  // const totalRows = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+  // if (currentPage < totalRows) {
+  const currentActive = document.querySelector(".page-numbers a.active");
+  if (currentActive) currentActive.classList.remove("active");
+  // Get the previous sibling element
+  const nextElement = currentActive.nextElementSibling;
+  nextElement.classList.add("active");
+  currentPage++;
+  renderTable();
+  // }
+});
