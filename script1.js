@@ -30,6 +30,40 @@ for (let i = 0; i < 10; i++) {
 }
 
 /////////////////////////////////////////////////////////////
+const dateInput = document.getElementById("doj");
+
+// Get today's date
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+
+// Set min to today and max to one year from today
+const oneYearLater = `${year + 1}-${month}-${day}`;
+
+// dateInput.min = formattedToday;
+dateInput.max = oneYearLater;
+///////////////////////////////////
+//Date formatting
+document.getElementById("doj").addEventListener("change", function () {
+  const dateInput = this.value;
+
+  if (dateInput) {
+    const date = new Date(dateInput);
+
+    // Format the date as MM/DD/YYYY
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-indexed
+    const year = date.getFullYear();
+
+    const formattedDate = `${month}/${day}/${year}`;
+
+    // Set the value of the text input to the formatted date
+    document.getElementById("formattedDoj").value = formattedDate;
+  }
+});
+
+////////////////////////////////////////////////////////////
 const save = document.querySelector("#save");
 let currentRow = null; //for storing index
 
@@ -189,7 +223,7 @@ function populateInputs(index) {
   document.getElementById("lname").value = tableJSON[1].data[index].lName;
   document.getElementById("designation").value = tableJSON[1].data[index].desig;
   document.getElementById("area").value = tableJSON[1].data[index].area;
-  document.getElementById("doj").value = tableJSON[1].data[index].doj;
+  document.getElementById("formattedDoj").value = tableJSON[1].data[index].doj;
 }
 
 //render data in table
@@ -398,7 +432,7 @@ function addData(e) {
   const lName = document.getElementById("lname").value;
   const desig = document.getElementById("designation").value;
   const area = document.getElementById("area").value;
-  const doj = document.getElementById("doj").value;
+  const doj = document.getElementById("formattedDoj").value;
 
   /**Overall Flow:
   The form is selected using getElementById.
