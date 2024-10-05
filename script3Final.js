@@ -1,4 +1,35 @@
+/**Explanation:
+1.checkFormValidity(): This function checks the validity of the form. If all required fields are filled, it enables the Add button; otherwise, it disables it.
+2.Event Listener on Inputs: Each input field has an input event listener that triggers checkFormValidity() whenever the user types something.
+3.Form Validation in addData(): Even when submitting, the form validation is checked to ensure that all required fields are valid. If not, reportValidity() will show the validation errors. */
+const form = document.getElementById("myForm");
 const add = document.querySelector("#add");
+// Get input fields
+const inputs = form.querySelectorAll("input, textarea");
+
+//function to check validity
+function checkFormValidity() {
+  if (form.checkValidity()) {
+    add.disabled = false;
+  } else {
+    add.disabled = true;
+  }
+}
+
+//check all the inputs whether they are filled
+inputs.forEach((input) => {
+  input.addEventListener("input", checkFormValidity);
+});
+
+///////////////////////////////////////
+const empId = document.getElementById("empId");
+let empValue = "";
+for (let i = 0; i < 10; i++) {
+  empValue += Math.floor(Math.random() * 10);
+  empId.value = empValue;
+}
+
+/////////////////////////////////////////////////////////////
 const save = document.querySelector("#save");
 let currentRow = null; //for storing index
 
@@ -16,6 +47,7 @@ let tableJSON = [
         lName: "Last Name",
         desig: "Designation",
         area: "Address",
+        doj: "Joining Date",
       },
     ],
   },
@@ -25,13 +57,24 @@ let tableJSON = [
 const searchInput = document.querySelector(".search-input");
 const searchButton = document.querySelector(".search-button");
 const clearButton = document.querySelector(".clear-button");
+const deleteSelectedButton = document.getElementById("deleteSelectedBtn");
+
+searchInput.addEventListener("input", () => {
+  if (searchInput.value.trim() !== "") {
+    clearButton.disabled = false;
+    searchButton.disabled = false;
+  } else {
+    clearButton.disabled = true;
+    searchButton.disabled = true;
+  }
+});
+
 //get the dopdown
 const dropdown = document.getElementById("headers");
 // Loop through the array and add each option to the dropdown
 let tableKeys = tableJSON[0].headers[0];
 let keysArray = Object.keys(tableKeys);
 const dropHeaders = tableJSON[0].headers[0];
-// console.log(keysArray, dropHeaders);
 for (let i = 0; i < keysArray.length - 1; i++) {
   const option = document.createElement("option");
   option.text = dropHeaders[keysArray[i]];
@@ -146,6 +189,7 @@ function populateInputs(index) {
   document.getElementById("lname").value = tableJSON[1].data[index].lName;
   document.getElementById("designation").value = tableJSON[1].data[index].desig;
   document.getElementById("area").value = tableJSON[1].data[index].area;
+  document.getElementById("doj").value = tableJSON[1].data[index].doj;
 }
 
 //render data in table
@@ -165,7 +209,6 @@ function renderTable() {
 
   // Determine the slice of data for the current page
   let start = currentPage * rowsPerPage;
-  console.log("curr:", currentPage);
   let end = start + rowsPerPage;
   //   const pageData = tableJSON[1].pageData.slice(start, end);
   prevAndNext(); //after updating current page caaling render inside render calling prevAndNext(), to update page active.
@@ -271,8 +314,27 @@ function renderTable() {
     addressCell.addEventListener("click", () =>
       makeEditable(addressCell, index, keysArray[4], textSpan3, input3)
     );
+    /************************************************************************* */
+    const dojCell = newRow.insertCell(5);
+    // Create a span to hold the text
+    const textSpan4 = document.createElement("span");
+    textSpan4.textContent = data.doj; // Set the text inside the span
+    // Create a hidden input element inside the cell
+    const input4 = document.createElement("input");
+    input4.type = "date";
+    input4.style.display = "none"; // Initially hidden
+    input4.value = data.doj; // Set the initial value
+    // Adding custom data-index attribute
+    dojCell.setAttribute("data-index", index); // Set the value to any number
+    // Append the span and input to the cell
+    dojCell.appendChild(textSpan4);
+    dojCell.appendChild(input4);
 
-    newRow.insertCell(5).innerHTML =
+    dojCell.addEventListener("click", () =>
+      makeEditable(dojCell, index, keysArray[5], textSpan4, input4)
+    );
+    /******************************************************************************** */
+    newRow.insertCell(6).innerHTML =
       '<button class="edit-btn">Edit</button>' +
       '<button class="delete-btn">Delete</button>';
 
@@ -292,7 +354,6 @@ function renderTable() {
         let inputValue = searchInput.value;
         // Convert the input to lowercase
         inputValue = inputValue.toLowerCase();
-        console.log(inputValue);
         const filtered_data = tableJSON[1].originalData.filter(
           (_, index) =>
             tableJSON[1].originalData[index][dropValue].toLowerCase() !==
@@ -337,21 +398,24 @@ function addData(e) {
   const lName = document.getElementById("lname").value;
   const desig = document.getElementById("designation").value;
   const area = document.getElementById("area").value;
+  const doj = document.getElementById("doj").value;
 
-  // if (!fName || !lName || !desig || !area) {
-  //   alert("Please fill in all fields.");
-  //   return;
-  // }
-  tableJSON[1].data.push({ isChecked: false, fName, lName, desig, area });
+  /**Overall Flow:
+  The form is selected using getElementById.
+  Before adding any data, the form's built-in HTML5 validation is checked using checkValidity().
+  If the form is invalid, the user is alerted to the issue with reportValidity() (which shows validation errors on the screen).
+  If validation fails, the function returns, preventing any further actions like adding data to the table. */
 
-  // Update the pageData after adding new form data
-  //   tableJSON[1].pageData = [...tableJSON[1].data];
+  // Ensure native form validation
+  if (!form.checkValidity()) {
+    form.reportValidity(); // Highlight invalid fields
+    return;
+  }
+  tableJSON[1].data.push({ isChecked: false, fName, lName, desig, area, doj });
 
   // Reset the current page to the last page (where new data is added)
   currentPage = Math.floor((tableJSON[1].data.length - 1) / rowsPerPage);
 
-  // Recalculate pagination based on the updated dataset
-  // pagination();
   if (
     tableJSON[1].data.length === 1 ||
     (tableBody.rows.length > 1 && (tableJSON[1].data.length - 1) % 5 === 0)
@@ -377,6 +441,7 @@ document.getElementById("save").addEventListener("click", function () {
     tableJSON[1].data[currentRow].desig =
       document.getElementById("designation").value;
     tableJSON[1].data[currentRow].area = document.getElementById("area").value;
+    tableJSON[1].data[currentRow].doj = document.getElementById("doj").value;
 
     renderTable();
     clearInputs();
@@ -397,6 +462,8 @@ function clearInputs() {
   document.getElementById("lname").value = "";
   document.getElementById("designation").value = "";
   document.getElementById("area").value = "";
+  document.getElementById("doj").value = "";
+  add.disabled = true;
 }
 
 // Check box
@@ -410,6 +477,7 @@ function toggle() {
     element.checked = ischecked;
     tableJSON[1].data[index].isChecked = element.checked;
   });
+  enableDeleteButton();
 }
 
 //if any element is unchecked then this function will be called unchecks checkAllElement
@@ -420,7 +488,22 @@ function uncheckAllElement(ele) {
 
   let index = parseInt(ele.getAttribute("data-index"));
   tableJSON[1].data[index].isChecked = ele.checked;
-  // console.log(tableJSON);
+  console.log(tableJSON);
+
+  enableDeleteButton();
+}
+
+//for enabling and disabling deleteSelected button
+function enableDeleteButton() {
+  let checkedData = tableJSON[1].data.filter(
+    (_, index) => tableJSON[1].data[index].isChecked === true
+  );
+
+  if (checkedData.length !== 0) {
+    deleteSelectedButton.disabled = false;
+  } else {
+    deleteSelectedButton.disabled = true;
+  }
 }
 
 //similarly, we can try for check
@@ -428,41 +511,41 @@ function checkAllElement() {
   checkAll.checked = true;
 }
 
-document
-  .getElementById("deleteSelectedBtn")
-  .addEventListener("click", function () {
-    //updating JSON Original, if we delete the data in filter mode...
+deleteSelectedButton.addEventListener("click", function () {
+  //updating JSON Original, if we delete the data in filter mode...
+  if (tableJSON[1].originalData) {
+    tableJSON[1].originalData = tableJSON[1].originalData.filter(
+      (_, index) => tableJSON[1].originalData[index].isChecked === false
+    );
+  }
+
+  if (tableJSON[1].data.length === 0) {
+    //deleting original data after all rows deleted
     if (tableJSON[1].originalData) {
-      tableJSON[1].originalData = tableJSON[1].originalData.filter(
-        (_, index) => tableJSON[1].originalData[index].isChecked === false
-      );
+      delete tableJSON[1].originalData;
     }
+  } else {
+    // Filter out the unchecked rows
+    tableJSON[1].data = tableJSON[1].data.filter(
+      (_, index) => tableJSON[1].data[index].isChecked === false
+    );
+    renderTable(); // Re-render the table
 
-    if (tableBody.rows.length === 0) {
-      //deleting original data after all rows deleted
-      if (tableJSON[1].originalData) {
-        delete tableJSON[1].originalData;
-      }
-      alert("Please add rows to the table to delete...!");
-    } else {
-      // Filter out the unchecked rows
-      tableJSON[1].data = tableJSON[1].data.filter(
-        (_, index) => tableJSON[1].data[index].isChecked === false
-      );
-      renderTable(); // Re-render the table
-
-      if (tableBody.rows.length === 0) {
-        checkAll.checked = false;
-      }
+    if (tableJSON[1].data.length === 0) {
+      checkAll.checked = false;
     }
-  });
+  }
+  //after deleting again disable it
+  deleteSelectedButton.disabled = true;
+
+  //even after deleting also we need to call pagination method to adjust the pages
+  pagination();
+});
 
 //filtering rows on button click
 searchButton.addEventListener("click", () => {
   const dropValue = dropdown.value;
   let inputValue = searchInput.value;
-  console.log("drop:", dropValue, "-->", inputValue);
-  // Convert the input to lowercase
   inputValue = inputValue.toLowerCase();
   if (!dropValue || !inputValue) {
     alert("Please fill in all filter fields...");
@@ -482,9 +565,8 @@ searchButton.addEventListener("click", () => {
       tableJSON[1].originalData = [...tableJSON[1].data]; // Copy the original data
     }
 
-    const filtered_data = tableJSON[1].data.filter(
-      (_, index) =>
-        tableJSON[1].data[index][dropValue].toLowerCase() == inputValue
+    const filtered_data = tableJSON[1].data.filter((_, index) =>
+      tableJSON[1].data[index][dropValue].toLowerCase().includes(inputValue)
     );
     tableJSON[1].data = filtered_data;
 
@@ -501,12 +583,15 @@ searchButton.addEventListener("click", () => {
     firstElement.classList.add("active");
     ////////////////////////
     renderTable();
+    pagination();
   }
 });
 
 //clearing data button
 clearButton.addEventListener("click", () => {
+  clearButton.disabled = true;
   searchInput.value = "";
+  searchButton.disabled = true;
   // Restore original data
   tableJSON[1].data = [...tableJSON[1].originalData]; // Reassign the backup to data
 
@@ -514,6 +599,7 @@ clearButton.addEventListener("click", () => {
   delete tableJSON[1].originalData;
 
   renderTable();
+  pagination();
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -523,7 +609,6 @@ function pagination() {
   pageNumbers.innerHTML = "";
   let totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
   for (let i = 0; i < totalPages; i++) {
-    console.log("i", i);
     const a = document.createElement("a");
     // a.setAttribute("href", "#");
     a.id = i;
@@ -601,7 +686,6 @@ prev.addEventListener("click", () => {
     previousElement.classList.add("active");
     currentPage--;
     renderTable();
-    console.log(currentActive);
   }
 });
 
