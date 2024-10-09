@@ -22,14 +22,56 @@ inputs.forEach((input) => {
 });
 
 ///////////////////////////////////////
+let rowNumber = 0;
 const empId = document.getElementById("empId");
-let empValue = "";
-for (let i = 0; i < 10; i++) {
-  empValue += Math.floor(Math.random() * 10);
-  empId.value = empValue;
+function empID() {
+  let eId = "EMP" + String(rowNumber).padStart(3, "0");
+  let empValue = "";
+  for (let i = 0; i < 10 - eId.length; i++) {
+    empValue += Math.floor(Math.random() * 10);
+    empId.value = eId + empValue;
+  }
 }
+empID();
 
 /////////////////////////////////////////////////////////////
+const dateInput = document.getElementById("doj");
+
+// Get today's date
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, "0");
+const day = String(today.getDate()).padStart(2, "0");
+
+// Format today's date as YYYY-MM-DD
+const formattedToday = `${year}-${month}-${day}`;
+
+// Set min to today and max to one year from today
+const oneYearLater = `${year + 1}-${month}-${day}`;
+
+// dateInput.min = formattedToday;
+dateInput.max = oneYearLater;
+///////////////////////////////////
+//Date formatting
+document.getElementById("doj").addEventListener("change", function () {
+  const dateInput = this.value;
+
+  if (dateInput) {
+    const date = new Date(dateInput);
+
+    // Format the date as MM/DD/YYYY
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-indexed
+    const year = date.getFullYear();
+
+    const formattedDate = `${month}/${day}/${year}`;
+
+    // Set the value of the text input to the formatted date
+    document.getElementById("formattedDoj").value = formattedDate;
+  }
+});
+
+////////////////////////////////////////////////////////////
 const save = document.querySelector("#save");
 let currentRow = null; //for storing index
 
@@ -53,6 +95,7 @@ let tableJSON = [
   },
   { data: [] },
 ];
+// tableJSON[1].data.push({ eID: empId.value });
 
 const searchInput = document.querySelector(".search-input");
 const searchButton = document.querySelector(".search-button");
@@ -75,7 +118,7 @@ const dropdown = document.getElementById("headers");
 let tableKeys = tableJSON[0].headers[0];
 let keysArray = Object.keys(tableKeys);
 const dropHeaders = tableJSON[0].headers[0];
-for (let i = 0; i < keysArray.length - 1; i++) {
+for (let i = 0; i < keysArray.length; i++) {
   const option = document.createElement("option");
   option.text = dropHeaders[keysArray[i]];
   option.value = keysArray[i]; // Set the value as lowercase version of the fruit name
@@ -189,7 +232,7 @@ function populateInputs(index) {
   document.getElementById("lname").value = tableJSON[1].data[index].lName;
   document.getElementById("designation").value = tableJSON[1].data[index].desig;
   document.getElementById("area").value = tableJSON[1].data[index].area;
-  document.getElementById("doj").value = tableJSON[1].data[index].doj;
+  document.getElementById("formattedDoj").value = tableJSON[1].data[index].doj;
 }
 
 //render data in table
@@ -219,6 +262,7 @@ function renderTable() {
     index++
   ) {
     const data = tableJSON[1].data[index]; // Get the current row from the original data
+    console.log(data.eID);
     /**=> You're correct that in the current approach, the text is not explicitly contained within a separate container element inside the cell. When we set firstNameCell.textContent = data.fName;, the text is treated as a "text node" (a child of the td element). Every td element can contain text directly as a child node without needing an explicit wrapper like a <span> or <div>.
     => To address your concern and make things clearer, we can wrap the text in a container element like a span. This way, the text and input can be more explicitly separated and managed. Let's modify the code to wrap the text inside a span element. */
 
@@ -253,7 +297,7 @@ function renderTable() {
     firstNameCell.appendChild(input);
 
     firstNameCell.addEventListener("click", () =>
-      makeEditable(firstNameCell, index, keysArray[1], textSpan, input)
+      makeEditable(index, keysArray[2], textSpan, input)
     );
 
     /************************************************************************* */
@@ -274,7 +318,7 @@ function renderTable() {
     lastNameCell.appendChild(input1);
 
     lastNameCell.addEventListener("click", () =>
-      makeEditable(lastNameCell, index, keysArray[2], textSpan1, input1)
+      makeEditable(index, keysArray[3], textSpan1, input1)
     );
     /************************************************************************* */
     const desigCell = newRow.insertCell(3);
@@ -293,7 +337,7 @@ function renderTable() {
     desigCell.appendChild(input2);
 
     desigCell.addEventListener("click", () =>
-      makeEditable(desigCell, index, keysArray[3], textSpan2, input2)
+      makeEditable(index, keysArray[4], textSpan2, input2)
     );
     /************************************************************************* */
     const addressCell = newRow.insertCell(4);
@@ -312,7 +356,7 @@ function renderTable() {
     addressCell.appendChild(input3);
 
     addressCell.addEventListener("click", () =>
-      makeEditable(addressCell, index, keysArray[4], textSpan3, input3)
+      makeEditable(index, keysArray[5], textSpan3, input3)
     );
     /************************************************************************* */
     const dojCell = newRow.insertCell(5);
@@ -321,7 +365,7 @@ function renderTable() {
     textSpan4.textContent = data.doj; // Set the text inside the span
     // Create a hidden input element inside the cell
     const input4 = document.createElement("input");
-    input4.type = "date";
+    input4.type = "text";
     input4.style.display = "none"; // Initially hidden
     input4.value = data.doj; // Set the initial value
     // Adding custom data-index attribute
@@ -331,12 +375,12 @@ function renderTable() {
     dojCell.appendChild(input4);
 
     dojCell.addEventListener("click", () =>
-      makeEditable(dojCell, index, keysArray[5], textSpan4, input4)
+      makeEditable(index, keysArray[6], textSpan4, input4)
     );
     /******************************************************************************** */
     newRow.insertCell(6).innerHTML =
-      '<button class="edit-btn">Edit</button>' +
-      '<button class="delete-btn">Delete</button>';
+      `<button class="edit-btn">Edit</button>` +
+      `<button class="delete-btn" id="${data.eID}" onclick="deleteFunction('${data.eID}', ${index})">Delete</button>`;
 
     // Add event listener to the new edit button
     newRow.querySelector(".edit-btn").addEventListener("click", function () {
@@ -345,31 +389,32 @@ function renderTable() {
       currentRow = index;
       populateInputs(currentRow);
     });
-
-    //Add event listener to the delete button
-    newRow.querySelector(".delete-btn").addEventListener("click", () => {
-      //this is if we delete on click, updating original data in filter mode
-      if (tableJSON[1].originalData) {
-        const dropValue = dropdown.value;
-        let inputValue = searchInput.value;
-        // Convert the input to lowercase
-        inputValue = inputValue.toLowerCase();
-        const filtered_data = tableJSON[1].originalData.filter(
-          (_, index) =>
-            tableJSON[1].originalData[index][dropValue].toLowerCase() !==
-            inputValue
-        );
-        tableJSON[1].originalData = filtered_data;
-      }
-
-      //updating in both the JSON's
-      tableJSON[1].data.splice(index, 1);
-      renderTable(); //Re-render table data
-    });
   }
 }
 
-function makeEditable(cell, index, key, span, input) {
+//////////////////////delete on filter mode
+function deleteFunction(dataID, dIndex) {
+  //if we click on delete, updating original data in filter mode
+  if (tableJSON[1].originalData) {
+    const filtered_data = tableJSON[1].originalData.filter(
+      (item, index) => item["eID"] !== dataID
+    );
+    tableJSON[1].originalData = filtered_data;
+
+    //updating deleted rows in original data aswell
+    const mainFiltered_data = tableJSON[1].data.filter(
+      (item, index) => item["eID"] !== dataID
+    );
+    tableJSON[1].data = mainFiltered_data;
+  } else {
+    //updating in the JSON's
+    tableJSON[1].data.splice(dIndex, 1);
+  }
+  renderTable(); //Re-render table data
+  pagination();
+}
+
+function makeEditable(index, key, span, input) {
   span.style.display = "none";
   input.style.display = "inline"; // Show the input field
 
@@ -398,7 +443,10 @@ function addData(e) {
   const lName = document.getElementById("lname").value;
   const desig = document.getElementById("designation").value;
   const area = document.getElementById("area").value;
-  const doj = document.getElementById("doj").value;
+  const doj = document.getElementById("formattedDoj").value;
+
+  rowNumber++;
+  empID();
 
   /**Overall Flow:
   The form is selected using getElementById.
@@ -411,7 +459,15 @@ function addData(e) {
     form.reportValidity(); // Highlight invalid fields
     return;
   }
-  tableJSON[1].data.push({ isChecked: false, fName, lName, desig, area, doj });
+  tableJSON[1].data.push({
+    isChecked: false,
+    eID: empId.value,
+    fName,
+    lName,
+    desig,
+    area,
+    doj,
+  });
 
   // Reset the current page to the last page (where new data is added)
   currentPage = Math.floor((tableJSON[1].data.length - 1) / rowsPerPage);
@@ -462,6 +518,7 @@ function clearInputs() {
   document.getElementById("lname").value = "";
   document.getElementById("designation").value = "";
   document.getElementById("area").value = "";
+  document.getElementById("formattedDoj").value = "";
   document.getElementById("doj").value = "";
   add.disabled = true;
 }

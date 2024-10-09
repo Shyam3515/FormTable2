@@ -1,77 +1,4 @@
-/**Explanation:
-1.checkFormValidity(): This function checks the validity of the form. If all required fields are filled, it enables the Add button; otherwise, it disables it.
-2.Event Listener on Inputs: Each input field has an input event listener that triggers checkFormValidity() whenever the user types something.
-3.Form Validation in addData(): Even when submitting, the form validation is checked to ensure that all required fields are valid. If not, reportValidity() will show the validation errors. */
-const form = document.getElementById("myForm");
 const add = document.querySelector("#add");
-// Get input fields
-const inputs = form.querySelectorAll("input, textarea");
-
-//function to check validity
-function checkFormValidity() {
-  if (form.checkValidity()) {
-    add.disabled = false;
-  } else {
-    add.disabled = true;
-  }
-}
-
-//check all the inputs whether they are filled
-inputs.forEach((input) => {
-  input.addEventListener("input", checkFormValidity);
-});
-
-///////////////////////////////////////
-let rowNumber = 0;
-const empId = document.getElementById("empId");
-function empID() {
-  let eId = "EMP" + String(rowNumber).padStart(3, "0");
-  let empValue = "";
-  for (let i = 0; i < 10 - eId.length; i++) {
-    empValue += Math.floor(Math.random() * 10);
-    empId.value = eId + empValue;
-  }
-}
-empID();
-
-/////////////////////////////////////////////////////////////
-const dateInput = document.getElementById("doj");
-
-// Get today's date
-const today = new Date();
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, "0");
-const day = String(today.getDate()).padStart(2, "0");
-
-// Format today's date as YYYY-MM-DD
-const formattedToday = `${year}-${month}-${day}`;
-
-// Set min to today and max to one year from today
-const oneYearLater = `${year + 1}-${month}-${day}`;
-
-// dateInput.min = formattedToday;
-dateInput.max = oneYearLater;
-///////////////////////////////////
-//Date formatting
-document.getElementById("doj").addEventListener("change", function () {
-  const dateInput = this.value;
-
-  if (dateInput) {
-    const date = new Date(dateInput);
-
-    // Format the date as MM/DD/YYYY
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Month is zero-indexed
-    const year = date.getFullYear();
-
-    const formattedDate = `${month}/${day}/${year}`;
-
-    // Set the value of the text input to the formatted date
-    document.getElementById("formattedDoj").value = formattedDate;
-  }
-});
-
-////////////////////////////////////////////////////////////
 const save = document.querySelector("#save");
 let currentRow = null; //for storing index
 
@@ -89,36 +16,24 @@ let tableJSON = [
         lName: "Last Name",
         desig: "Designation",
         area: "Address",
-        doj: "Joining Date",
+        action: "Action",
       },
     ],
   },
   { data: [] },
 ];
-// tableJSON[1].data.push({ eID: empId.value });
 
 const searchInput = document.querySelector(".search-input");
 const searchButton = document.querySelector(".search-button");
 const clearButton = document.querySelector(".clear-button");
-const deleteSelectedButton = document.getElementById("deleteSelectedBtn");
-
-searchInput.addEventListener("input", () => {
-  if (searchInput.value.trim() !== "") {
-    clearButton.disabled = false;
-    searchButton.disabled = false;
-  } else {
-    clearButton.disabled = true;
-    searchButton.disabled = true;
-  }
-});
-
 //get the dopdown
 const dropdown = document.getElementById("headers");
 // Loop through the array and add each option to the dropdown
 let tableKeys = tableJSON[0].headers[0];
 let keysArray = Object.keys(tableKeys);
 const dropHeaders = tableJSON[0].headers[0];
-for (let i = 0; i < keysArray.length; i++) {
+// console.log(keysArray, dropHeaders);
+for (let i = 0; i < keysArray.length - 1; i++) {
   const option = document.createElement("option");
   option.text = dropHeaders[keysArray[i]];
   option.value = keysArray[i]; // Set the value as lowercase version of the fruit name
@@ -204,16 +119,9 @@ function generateTable(table) {
         th.querySelector(".fa-arrow-up").style.display = "inline-block";
       }
     });
-    //append headers
+
     headerRow.appendChild(th);
   });
-
-  //for action
-  const actionHeader = document.createElement("th");
-  const actionText = document.createTextNode("Action");
-  actionHeader.appendChild(actionText);
-  headerRow.appendChild(actionHeader);
-
   // Append the <thead> to the table
   table.appendChild(thead);
   // Create <tbody>
@@ -232,7 +140,6 @@ function populateInputs(index) {
   document.getElementById("lname").value = tableJSON[1].data[index].lName;
   document.getElementById("designation").value = tableJSON[1].data[index].desig;
   document.getElementById("area").value = tableJSON[1].data[index].area;
-  document.getElementById("formattedDoj").value = tableJSON[1].data[index].doj;
 }
 
 //render data in table
@@ -254,15 +161,13 @@ function renderTable() {
   let start = currentPage * rowsPerPage;
   let end = start + rowsPerPage;
   //   const pageData = tableJSON[1].pageData.slice(start, end);
-  prevAndNext(); //after updating current page caaling render inside render calling prevAndNext(), to update page active.
 
   for (
     let index = start;
     index < end && index < tableJSON[1].data.length;
     index++
   ) {
-    const data = tableJSON[1].data[index]; // Get the current row from the original data
-    console.log(data.eID);
+    const data = tableJSON[1].data[index];
     /**=> You're correct that in the current approach, the text is not explicitly contained within a separate container element inside the cell. When we set firstNameCell.textContent = data.fName;, the text is treated as a "text node" (a child of the td element). Every td element can contain text directly as a child node without needing an explicit wrapper like a <span> or <div>.
     => To address your concern and make things clearer, we can wrap the text in a container element like a span. This way, the text and input can be more explicitly separated and managed. Let's modify the code to wrap the text inside a span element. */
 
@@ -297,7 +202,7 @@ function renderTable() {
     firstNameCell.appendChild(input);
 
     firstNameCell.addEventListener("click", () =>
-      makeEditable(index, keysArray[2], textSpan, input)
+      makeEditable(firstNameCell, index, keysArray[1], textSpan, input)
     );
 
     /************************************************************************* */
@@ -318,7 +223,7 @@ function renderTable() {
     lastNameCell.appendChild(input1);
 
     lastNameCell.addEventListener("click", () =>
-      makeEditable(index, keysArray[3], textSpan1, input1)
+      makeEditable(lastNameCell, index, keysArray[2], textSpan1, input1)
     );
     /************************************************************************* */
     const desigCell = newRow.insertCell(3);
@@ -337,7 +242,7 @@ function renderTable() {
     desigCell.appendChild(input2);
 
     desigCell.addEventListener("click", () =>
-      makeEditable(index, keysArray[4], textSpan2, input2)
+      makeEditable(desigCell, index, keysArray[3], textSpan2, input2)
     );
     /************************************************************************* */
     const addressCell = newRow.insertCell(4);
@@ -356,31 +261,12 @@ function renderTable() {
     addressCell.appendChild(input3);
 
     addressCell.addEventListener("click", () =>
-      makeEditable(index, keysArray[5], textSpan3, input3)
+      makeEditable(addressCell, index, keysArray[4], textSpan3, input3)
     );
-    /************************************************************************* */
-    const dojCell = newRow.insertCell(5);
-    // Create a span to hold the text
-    const textSpan4 = document.createElement("span");
-    textSpan4.textContent = data.doj; // Set the text inside the span
-    // Create a hidden input element inside the cell
-    const input4 = document.createElement("input");
-    input4.type = "text";
-    input4.style.display = "none"; // Initially hidden
-    input4.value = data.doj; // Set the initial value
-    // Adding custom data-index attribute
-    dojCell.setAttribute("data-index", index); // Set the value to any number
-    // Append the span and input to the cell
-    dojCell.appendChild(textSpan4);
-    dojCell.appendChild(input4);
 
-    dojCell.addEventListener("click", () =>
-      makeEditable(index, keysArray[6], textSpan4, input4)
-    );
-    /******************************************************************************** */
-    newRow.insertCell(6).innerHTML =
-      `<button class="edit-btn">Edit</button>` +
-      `<button class="delete-btn" id="${data.eID}" onclick="deleteFunction('${data.eID}', ${index})">Delete</button>`;
+    newRow.insertCell(5).innerHTML =
+      '<button class="edit-btn">Edit</button>' +
+      '<button class="delete-btn">Delete</button>';
 
     // Add event listener to the new edit button
     newRow.querySelector(".edit-btn").addEventListener("click", function () {
@@ -389,32 +275,32 @@ function renderTable() {
       currentRow = index;
       populateInputs(currentRow);
     });
+
+    //Add event listener to the delete button
+    newRow.querySelector(".delete-btn").addEventListener("click", () => {
+      //this is if we delete on click, updating original data in filter mode
+      if (tableJSON[1].originalData) {
+        const dropValue = dropdown.value;
+        let inputValue = searchInput.value;
+        // Convert the input to lowercase
+        inputValue = inputValue.toLowerCase();
+        console.log(inputValue);
+        const filtered_data = tableJSON[1].originalData.filter(
+          (_, index) =>
+            tableJSON[1].originalData[index][dropValue].toLowerCase() !==
+            inputValue
+        );
+        tableJSON[1].originalData = filtered_data;
+      }
+
+      //updating in both the JSON's, as we are adding data to the pageData from main data everytime we click on add
+      tableJSON[1].data.splice(index, 1);
+      renderTable(); //Re-render table data
+    });
   }
 }
 
-//////////////////////delete on filter mode
-function deleteFunction(dataID, dIndex) {
-  //if we click on delete, updating duplicate data in filter mode
-  if (tableJSON[1].originalData) {
-    const filtered_data = tableJSON[1].originalData.filter(
-      (item, index) => item["eID"] !== dataID
-    );
-    tableJSON[1].originalData = filtered_data;
-
-    //updating deleted rows in original data aswell
-    const mainFiltered_data = tableJSON[1].data.filter(
-      (item, index) => item["eID"] !== dataID
-    );
-    tableJSON[1].data = mainFiltered_data;
-  } else {
-    //updating in the JSON's
-    tableJSON[1].data.splice(dIndex, 1);
-  }
-  renderTable(); //Re-render table data
-  pagination();
-}
-
-function makeEditable(index, key, span, input) {
+function makeEditable(cell, index, key, span, input) {
   span.style.display = "none";
   input.style.display = "inline"; // Show the input field
 
@@ -443,10 +329,6 @@ function addData(e) {
   const lName = document.getElementById("lname").value;
   const desig = document.getElementById("designation").value;
   const area = document.getElementById("area").value;
-  const doj = document.getElementById("formattedDoj").value;
-
-  rowNumber++;
-  empID();
 
   /**Overall Flow:
   The form is selected using getElementById.
@@ -454,19 +336,12 @@ function addData(e) {
   If the form is invalid, the user is alerted to the issue with reportValidity() (which shows validation errors on the screen).
   If validation fails, the function returns, preventing any further actions like adding data to the table. */
 
-  // Ensure native form validation
-  if (!form.checkValidity()) {
-    form.reportValidity(); // Highlight invalid fields
-    return;
-  }
   tableJSON[1].data.push({
     isChecked: false,
-    eID: empId.value,
     fName,
     lName,
     desig,
     area,
-    doj,
   });
 
   // Reset the current page to the last page (where new data is added)
@@ -477,7 +352,6 @@ function addData(e) {
     (tableBody.rows.length > 1 && (tableJSON[1].data.length - 1) % 5 === 0)
   ) {
     pagination();
-    prevAndNext();
   }
 
   // Render the table (it will only show the first 5 records for the current page)
@@ -497,7 +371,6 @@ document.getElementById("save").addEventListener("click", function () {
     tableJSON[1].data[currentRow].desig =
       document.getElementById("designation").value;
     tableJSON[1].data[currentRow].area = document.getElementById("area").value;
-    tableJSON[1].data[currentRow].doj = document.getElementById("doj").value;
 
     renderTable();
     clearInputs();
@@ -518,9 +391,6 @@ function clearInputs() {
   document.getElementById("lname").value = "";
   document.getElementById("designation").value = "";
   document.getElementById("area").value = "";
-  document.getElementById("formattedDoj").value = "";
-  document.getElementById("doj").value = "";
-  add.disabled = true;
 }
 
 // Check box
@@ -534,7 +404,6 @@ function toggle() {
     element.checked = ischecked;
     tableJSON[1].data[index].isChecked = element.checked;
   });
-  enableDeleteButton();
 }
 
 //if any element is unchecked then this function will be called unchecks checkAllElement
@@ -545,22 +414,7 @@ function uncheckAllElement(ele) {
 
   let index = parseInt(ele.getAttribute("data-index"));
   tableJSON[1].data[index].isChecked = ele.checked;
-  console.log(tableJSON);
-
-  enableDeleteButton();
-}
-
-//for enabling and disabling deleteSelected button
-function enableDeleteButton() {
-  let checkedData = tableJSON[1].data.filter(
-    (_, index) => tableJSON[1].data[index].isChecked === true
-  );
-
-  if (checkedData.length !== 0) {
-    deleteSelectedButton.disabled = false;
-  } else {
-    deleteSelectedButton.disabled = true;
-  }
+  // console.log(tableJSON);
 }
 
 //similarly, we can try for check
@@ -568,42 +422,41 @@ function checkAllElement() {
   checkAll.checked = true;
 }
 
-//this method works for the checkboxes
-deleteSelectedButton.addEventListener("click", function () {
-  //updating JSON Original, if we delete the data in filter mode...
-  if (tableJSON[1].originalData) {
-    tableJSON[1].originalData = tableJSON[1].originalData.filter(
-      (_, index) => tableJSON[1].originalData[index].isChecked === false
-    );
-  }
-
-  if (tableJSON[1].data.length === 0) {
-    //deleting original data after all rows deleted
+document
+  .getElementById("deleteSelectedBtn")
+  .addEventListener("click", function () {
+    //updating JSON Original, if we delete the data in filter mode...
     if (tableJSON[1].originalData) {
-      delete tableJSON[1].originalData;
+      tableJSON[1].originalData = tableJSON[1].originalData.filter(
+        (_, index) => tableJSON[1].originalData[index].isChecked === false
+      );
     }
-  } else {
-    // Filter out the unchecked rows
-    tableJSON[1].data = tableJSON[1].data.filter(
-      (_, index) => tableJSON[1].data[index].isChecked === false
-    );
-    renderTable(); // Re-render the table
 
-    if (tableJSON[1].data.length === 0) {
-      checkAll.checked = false;
+    if (tableBody.rows.length === 0) {
+      //deleting original data after all rows deleted
+      if (tableJSON[1].originalData) {
+        delete tableJSON[1].originalData;
+      }
+      alert("Please add rows to the table to delete...!");
+    } else {
+      // Filter out the unchecked rows
+      tableJSON[1].data = tableJSON[1].data.filter(
+        (_, index) => tableJSON[1].data[index].isChecked === false
+      );
+      renderTable(); // Re-render the table
+
+      if (tableBody.rows.length === 0) {
+        checkAll.checked = false;
+      }
     }
-  }
-  //after deleting again disable it
-  deleteSelectedButton.disabled = true;
-
-  //even after deleting also we need to call pagination method to adjust the pages
-  pagination();
-});
+  });
 
 //filtering rows on button click
 searchButton.addEventListener("click", () => {
   const dropValue = dropdown.value;
   let inputValue = searchInput.value;
+  console.log("drop:", dropValue, "-->", inputValue);
+  // Convert the input to lowercase
   inputValue = inputValue.toLowerCase();
   if (!dropValue || !inputValue) {
     alert("Please fill in all filter fields...");
@@ -627,29 +480,13 @@ searchButton.addEventListener("click", () => {
       tableJSON[1].data[index][dropValue].toLowerCase().includes(inputValue)
     );
     tableJSON[1].data = filtered_data;
-
-    ////////////////////////////
-    //when we filter, if we are in another page, we need to move to page 0.
-    currentPage = 0;
-    //removing current active and adding to first page
-    const currentActive = document.querySelector(".page-numbers a.active");
-    if (currentActive) currentActive.classList.remove("active");
-
-    const pageNumbers = document.querySelector(".page-numbers");
-    // Get the first child element
-    const firstElement = pageNumbers.firstElementChild;
-    firstElement.classList.add("active");
-    ////////////////////////
     renderTable();
-    pagination();
   }
 });
 
 //clearing data button
 clearButton.addEventListener("click", () => {
-  clearButton.disabled = true;
   searchInput.value = "";
-  searchButton.disabled = true;
   // Restore original data
   tableJSON[1].data = [...tableJSON[1].originalData]; // Reassign the backup to data
 
@@ -657,16 +494,16 @@ clearButton.addEventListener("click", () => {
   delete tableJSON[1].originalData;
 
   renderTable();
-  pagination();
 });
 
 /////////////////////////////////////////////////////////////////////
-
 function pagination() {
   // Clear any previous pagination links
   pageNumbers.innerHTML = "";
-  let totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+
+  const totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
   for (let i = 0; i < totalPages; i++) {
+    console.log(i);
     const a = document.createElement("a");
     // a.setAttribute("href", "#");
     a.id = i;
@@ -679,7 +516,6 @@ function pagination() {
     pageNumbers.appendChild(a);
   }
   addAnchorListeners();
-  // prevAndNext();
 }
 
 function addAnchorListeners() {
@@ -699,63 +535,7 @@ function addAnchorListeners() {
       // Update the current page
       currentPage = Number(anchor.id);
 
-      // Re-render the table to show the selected page's data
       renderTable();
     });
   });
 }
-
-//////////////////////////////////////////////////next and prev
-const prev = document.querySelector(".prev");
-const next = document.querySelector(".next");
-function prevAndNext() {
-  const totalRows = Math.ceil(tableJSON[1].data.length / rowsPerPage);
-  const anchors = document.querySelectorAll(".page-numbers a");
-
-  if (totalRows <= 1) {
-    //when only one page is there
-    prev.style.cursor = "not-allowed";
-    next.style.cursor = "not-allowed";
-  } else if (
-    totalRows == anchors.length &&
-    currentPage === anchors.length - 1
-  ) {
-    //two pages and active in last page
-    prev.style.cursor = "pointer";
-    next.style.cursor = "not-allowed";
-  } else if (totalRows > 1 && currentPage === 0) {
-    //there are two pages, but active is in first page.
-    prev.style.cursor = "not-allowed";
-    next.style.cursor = "pointer";
-  } else {
-    //remaining all are pointers
-    prev.style.cursor = "pointer";
-    next.style.cursor = "pointer";
-  }
-}
-
-prev.addEventListener("click", () => {
-  if (currentPage > 0) {
-    // Remove 'active' class from the currently active anchor
-    const currentActive = document.querySelector(".page-numbers a.active");
-    if (currentActive) currentActive.classList.remove("active");
-    // Get the previous sibling element
-    const previousElement = currentActive.previousElementSibling;
-    previousElement.classList.add("active");
-    currentPage--;
-    renderTable();
-  }
-});
-
-next.addEventListener("click", () => {
-  // const totalRows = Math.ceil(tableJSON[1].data.length / rowsPerPage);
-  // if (currentPage < totalRows) {
-  const currentActive = document.querySelector(".page-numbers a.active");
-  if (currentActive) currentActive.classList.remove("active");
-  // Get the previous sibling element
-  const nextElement = currentActive.nextElementSibling;
-  nextElement.classList.add("active");
-  currentPage++;
-  renderTable();
-  // }
-});

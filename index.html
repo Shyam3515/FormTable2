@@ -15,26 +15,69 @@
   <body>
     <h1>Employee Details</h1>
 
-    <form id="details">
+    <form id="myForm">
       <div>
-        <label for="fname">FirstName: </label>
-        <input type="text" id="fname" placeholder="FirstName" />
+        <label for="empId">Employee ID: <span>*</span></label>
+        <input type="text" id="empId" readonly />
       </div>
+      <!--  -->
       <div>
-        <label for="lname">LastName: </label>
-        <input type="text" id="lname" placeholder="LastName" />
+        <label for="fname">FirstName: <span>*</span></label>
+        <input
+          type="text"
+          id="fname"
+          placeholder="FirstName"
+          required
+          minlength="5"
+          maxlength="30"
+        />
       </div>
+      <!--  -->
       <div>
-        <label for="designation">Designation: </label>
-        <input type="text" id="designation" placeholder="Designation" />
+        <label for="lname">LastName: <span>*</span></label>
+        <input
+          type="text"
+          id="lname"
+          placeholder="LastName"
+          required
+          minlength="3"
+          maxlength="20"
+        />
       </div>
+      <!--  -->
       <div>
-        <label for="area">Address: </label>
-        <textarea id="area" placeholder="Enter Address..."></textarea>
+        <label for="designation">Designation: <span>*</span></label>
+        <input
+          type="text"
+          id="designation"
+          placeholder="Designation"
+          required
+        />
+      </div>
+      <!--  -->
+      <div>
+        <label for="doj">Joining Date: <span>*</span></label>
+        <div>
+          <input
+            type="text"
+            id="formattedDoj"
+            class="fdate"
+            placeholder="Joining Date"
+            readonly
+            required
+          />
+          <input type="date" id="doj" class="doj" min="2000-01-01" required />
+        </div>
+      </div>
+
+      <!--  -->
+      <div>
+        <label for="area">Address: <span>*</span></label>
+        <textarea id="area" placeholder="Enter Address..." required></textarea>
       </div>
       <br />
 
-      <button type="button" id="add">Add</button>
+      <button type="submit" id="add" disabled>Add</button>
       <button type="button" id="save">Save</button>
     </form>
 
@@ -47,19 +90,23 @@
       <div class="filter-input">
         <label>Enter text to find:</label>
         <input type="text" placeholder="Enter text..." class="search-input" />
-        <button class="search-button">Search</button>
+        <button class="search-button" type="submit" disabled>Search</button>
       </div>
 
-      <div class="clear-button"><button>Clear</button></div>
+      <div>
+        <button class="clear-button" id="clear-button" disabled>Clear</button>
+      </div>
     </div>
 
     <!-- table -->
     <table id="table"></table>
 
-    <button type="button" id="deleteSelectedBtn">Delete Selected</button>
+    <button type="button" id="deleteSelectedBtn" disabled>
+      Delete Selected
+    </button>
 
     <div class="pagination">
-      <a href="#">&laquo;</a>
+      <a class="prev">&laquo;</a>
       <div class="page-numbers">
         <!-- <a href="#">1</a>
         <a class="active" href="#">2</a>
@@ -68,13 +115,9 @@
         <a href="#">5</a>
         <a href="#">6</a> -->
       </div>
-      <a href="#">&raquo;</a>
+      <a class="next">&raquo;</a>
     </div>
 
-    <script src="script1.js"></script>
+    <script src="script3Final.js"></script>
   </body>
 </html>
-<!--   document.querySelectorAll("a").addEventListener("click", () => {
-    tableJSON[1].slice(0, 5);
-    renderTable;
-  }); -->
