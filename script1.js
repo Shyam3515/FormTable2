@@ -93,7 +93,7 @@ let tableJSON = [
       },
     ],
   },
-  { data: [] },
+  { originalDataSource: [] },
 ];
 // tableJSON[1].data.push({ eID: empId.value });
 
@@ -178,7 +178,7 @@ function generateTable(table) {
         if (arrowDown) arrowDown.style.display = "none";
       });
 
-      const sortedData = tableJSON[1].data.sort((rowA, rowB) => {
+      const sortedData = tableJSON[1].originalDataSource.sort((rowA, rowB) => {
         const textA = rowA[key].toLowerCase();
         const textB = rowB[key].toLowerCase();
 
@@ -191,7 +191,7 @@ function generateTable(table) {
           : textB - textA;
       });
 
-      renderTable(); //render table with sorted data
+      renderTable(tableJSON[1].originalDataSource); //render table with sorted data
 
       // Toggle sorting direction and update the arrow visibility
       if (isAscending) {
@@ -228,25 +228,30 @@ const tableBody = document
 /************************************************ */
 
 function populateInputs(index) {
-  document.getElementById("fname").value = tableJSON[1].data[index].fName;
-  document.getElementById("lname").value = tableJSON[1].data[index].lName;
-  document.getElementById("designation").value = tableJSON[1].data[index].desig;
-  document.getElementById("area").value = tableJSON[1].data[index].area;
-  document.getElementById("formattedDoj").value = tableJSON[1].data[index].doj;
+  document.getElementById("fname").value =
+    tableJSON[1].originalDataSource[index].fName;
+  document.getElementById("lname").value =
+    tableJSON[1].originalDataSource[index].lName;
+  document.getElementById("designation").value =
+    tableJSON[1].originalDataSource[index].desig;
+  document.getElementById("area").value =
+    tableJSON[1].originalDataSource[index].area;
+  document.getElementById("formattedDoj").value =
+    tableJSON[1].originalDataSource[index].doj;
 }
 
 //render data in table
-function renderTable() {
+function renderTable(tableData) {
   let tableKeys;
   let keysArray;
   tableBody.innerHTML = ""; // Clear existing rows
   console.log("Table JSON: ", tableJSON);
 
   //we are doing this bcz, when we delete all data we can't have any data left to get keys
-  if (tableJSON[1].data.length > 0) {
+  if (tableData.length > 0) {
     // Convert object keys into an array
     //here as our object is in array, getting keys from first object and passing these keys, to update our cell
-    tableKeys = tableJSON[1].data[0];
+    tableKeys = tableData[0];
     keysArray = Object.keys(tableKeys);
   }
 
@@ -256,12 +261,8 @@ function renderTable() {
   //   const pageData = tableJSON[1].pageData.slice(start, end);
   prevAndNext(); //after updating current page caaling render inside render calling prevAndNext(), to update page active.
 
-  for (
-    let index = start;
-    index < end && index < tableJSON[1].data.length;
-    index++
-  ) {
-    const data = tableJSON[1].data[index]; // Get the current row from the original data
+  for (let index = start; index < end && index < tableData.length; index++) {
+    const data = tableData[index]; // Get the current row from the original data
     console.log(data.eID);
     /**=> You're correct that in the current approach, the text is not explicitly contained within a separate container element inside the cell. When we set firstNameCell.textContent = data.fName;, the text is treated as a "text node" (a child of the td element). Every td element can contain text directly as a child node without needing an explicit wrapper like a <span> or <div>.
     => To address your concern and make things clearer, we can wrap the text in a container element like a span. This way, the text and input can be more explicitly separated and managed. Let's modify the code to wrap the text inside a span element. */
@@ -393,25 +394,44 @@ function renderTable() {
 }
 
 //////////////////////delete on filter mode
-function deleteFunction(dataID, dIndex) {
-  //if we click on delete, updating duplicate data in filter mode
-  if (tableJSON[1].originalData) {
-    const filtered_data = tableJSON[1].originalData.filter(
-      (item, index) => item["eID"] !== dataID
-    );
-    tableJSON[1].originalData = filtered_data;
+// function deleteFunction(dataID, dIndex) {
+//   //if we click on delete, updating duplicate data in filter mode
+//   if (tableJSON[1].originalData) {
+//     const filtered_data_after_delete = tableJSON[1].originalData.filter(
+//       (item, index) => item["eID"] !== dataID
+//     );
+//     tableJSON[1].originalData = filtered_data_after_delete;
 
-    //updating deleted rows in original data aswell
-    const mainFiltered_data = tableJSON[1].data.filter(
+//     //updating deleted rows in original data aswell
+//     const mainFiltered_data_after_delete = tableJSON[1].data.filter(
+//       (item, index) => item["eID"] !== dataID
+//     );
+//     tableJSON[1].data = mainFiltered_data_after_delete;
+//   } else {
+//     //updating in the JSON's
+//     tableJSON[1].data.splice(dIndex, 1);
+//   }
+//   renderTable(); //Re-render table data
+//   pagination();
+// }
+
+function deleteFunction(dataID, dIndex) {
+  //if we click on delete in filter mode, updating the deleted rows in filtered data
+  //whether it is in filter mode or normal mode, deleted rows should get updated in actual JSON data always.
+  if (tableJSON[1].FilteredDatasource) {
+    const updated_data_after_delete = tableJSON[1].originalDataSource.filter(
       (item, index) => item["eID"] !== dataID
     );
-    tableJSON[1].data = mainFiltered_data;
+    tableJSON[1].originalDataSource = updated_data_after_delete;
+    tableJSON[1].FilteredDatasource.splice(dIndex, 1);
+    renderTable(tableJSON[1].FilteredDatasource);
+    pagination(tableJSON[1].FilteredDatasource);
   } else {
-    //updating in the JSON's
-    tableJSON[1].data.splice(dIndex, 1);
+    //updating deleted rows in original data aswell, updating in the JSON's
+    tableJSON[1].originalDataSource.splice(dIndex, 1);
+    renderTable(tableJSON[1].originalDataSource); //Re-render table data
+    pagination(tableJSON[1].originalDataSource);
   }
-  renderTable(); //Re-render table data
-  pagination();
 }
 
 function makeEditable(index, key, span, input) {
@@ -429,7 +449,7 @@ function makeEditable(index, key, span, input) {
     input.style.display = "none"; // Hide the input field again
 
     // Update your data model if needed
-    const tableIndex = tableJSON[1].data[index]; //here typeOf key is string, not a direct value, so we need to follow this process to update the cell
+    const tableIndex = tableJSON[1].originalDataSource[index]; //here typeOf key is string, not a direct value, so we need to follow this process to update the cell
     tableIndex[key] = input.value;
   });
 }
@@ -459,7 +479,7 @@ function addData(e) {
     form.reportValidity(); // Highlight invalid fields
     return;
   }
-  tableJSON[1].data.push({
+  tableJSON[1].originalDataSource.push({
     isChecked: false,
     eID: empId.value,
     fName,
@@ -470,18 +490,21 @@ function addData(e) {
   });
 
   // Reset the current page to the last page (where new data is added)
-  currentPage = Math.floor((tableJSON[1].data.length - 1) / rowsPerPage);
+  currentPage = Math.floor(
+    (tableJSON[1].originalDataSource.length - 1) / rowsPerPage
+  );
 
   if (
-    tableJSON[1].data.length === 1 ||
-    (tableBody.rows.length > 1 && (tableJSON[1].data.length - 1) % 5 === 0)
+    tableJSON[1].originalDataSource.length === 1 ||
+    (tableBody.rows.length > 1 &&
+      (tableJSON[1].originalDataSource.length - 1) % 5 === 0)
   ) {
-    pagination();
+    pagination(tableJSON[1].originalDataSource);
     prevAndNext();
   }
 
   // Render the table (it will only show the first 5 records for the current page)
-  renderTable();
+  renderTable(tableJSON[1].originalDataSource);
   // After inserting we,Clear input fields
   clearInputs();
 }
@@ -490,16 +513,18 @@ function addData(e) {
 document.getElementById("save").addEventListener("click", function () {
   if (currentRow !== null) {
     // Update the data in the array
-    tableJSON[1].data[currentRow].fName =
+    tableJSON[1].originalDataSource[currentRow].fName =
       document.getElementById("fname").value;
-    tableJSON[1].data[currentRow].lName =
+    tableJSON[1].originalDataSource[currentRow].lName =
       document.getElementById("lname").value;
-    tableJSON[1].data[currentRow].desig =
+    tableJSON[1].originalDataSource[currentRow].desig =
       document.getElementById("designation").value;
-    tableJSON[1].data[currentRow].area = document.getElementById("area").value;
-    tableJSON[1].data[currentRow].doj = document.getElementById("doj").value;
+    tableJSON[1].originalDataSource[currentRow].area =
+      document.getElementById("area").value;
+    tableJSON[1].originalDataSource[currentRow].doj =
+      document.getElementById("doj").value;
 
-    renderTable();
+    renderTable(tableJSON[1].originalDataSource);
     clearInputs();
     currentRow = null; // Reset currentRow
 
@@ -528,13 +553,21 @@ const checkAll = document.getElementById("checkAll");
 checkAll.addEventListener("click", toggle);
 function toggle() {
   const ischecked = checkAll.checked;
-  let checks = document.getElementsByClassName("row-checkbox");
-
-  Array.from(checks).forEach((element, index) => {
-    element.checked = ischecked;
-    tableJSON[1].data[index].isChecked = element.checked;
-  });
-  enableDeleteButton();
+  if (tableJSON[1].FilteredDatasource) {
+    let checks = document.getElementsByClassName("row-checkbox");
+    Array.from(checks).forEach((element, index) => {
+      element.checked = ischecked;
+      tableJSON[1].FilteredDatasource[index].isChecked = element.checked;
+    });
+    enableDeleteButton(tableJSON[1].originalDataSource);
+  } else {
+    let checks = document.getElementsByClassName("row-checkbox");
+    Array.from(checks).forEach((element, index) => {
+      element.checked = ischecked;
+      tableJSON[1].originalDataSource[index].isChecked = element.checked;
+    });
+    enableDeleteButton(tableJSON[1].originalDataSource);
+  }
 }
 
 //if any element is unchecked then this function will be called unchecks checkAllElement
@@ -544,17 +577,19 @@ function uncheckAllElement(ele) {
   checkAll.checked = false;
 
   let index = parseInt(ele.getAttribute("data-index"));
-  tableJSON[1].data[index].isChecked = ele.checked;
+  if (tableJSON[1].FilteredDatasource) {
+    tableJSON[1].FilteredDatasource[index].isChecked = ele.checked;
+    enableDeleteButton(tableJSON[1].FilteredDatasource);
+  } else {
+    tableJSON[1].originalDataSource[index].isChecked = ele.checked;
+    enableDeleteButton(tableJSON[1].originalDataSource);
+  }
   console.log(tableJSON);
-
-  enableDeleteButton();
 }
 
 //for enabling and disabling deleteSelected button
-function enableDeleteButton() {
-  let checkedData = tableJSON[1].data.filter(
-    (_, index) => tableJSON[1].data[index].isChecked === true
-  );
+function enableDeleteButton(data) {
+  let checkedData = data.filter((item, index) => item.isChecked === true);
 
   if (checkedData.length !== 0) {
     deleteSelectedButton.disabled = false;
@@ -570,34 +605,42 @@ function checkAllElement() {
 
 //this method works for the checkboxes
 deleteSelectedButton.addEventListener("click", function () {
-  //updating JSON Original, if we delete the data in filter mode...
-  if (tableJSON[1].originalData) {
-    tableJSON[1].originalData = tableJSON[1].originalData.filter(
-      (_, index) => tableJSON[1].originalData[index].isChecked === false
+  //updating filtered JSON, if we delete the data in filter mode...
+  if (tableJSON[1].FilteredDatasource) {
+    tableJSON[1].FilteredDatasource = tableJSON[1].FilteredDatasource.filter(
+      (item, index) => item.isChecked === false
     );
+
+    if (tableJSON[1].FilteredDatasource.length === 0) {
+      checkAll.checked = false;
+    }
+    renderTable(tableJSON[1].FilteredDatasource);
+    //even after deleting also we need to call pagination method to adjust the pages
+    pagination(tableJSON[1].FilteredDatasource);
   }
 
-  if (tableJSON[1].data.length === 0) {
+  if (tableJSON[1].originalDataSource.length === 0) {
     //deleting original data after all rows deleted
-    if (tableJSON[1].originalData) {
-      delete tableJSON[1].originalData;
+    if (tableJSON[1].FilteredDatasource) {
+      delete tableJSON[1].FilteredDatasource;
     }
   } else {
     // Filter out the unchecked rows
-    tableJSON[1].data = tableJSON[1].data.filter(
-      (_, index) => tableJSON[1].data[index].isChecked === false
+    tableJSON[1].originalDataSource = tableJSON[1].originalDataSource.filter(
+      (item, index) => item.isChecked === false
     );
-    renderTable(); // Re-render the table
+    if (!tableJSON[1].FilteredDatasource) {
+      renderTable(tableJSON[1].originalDataSource); // Re-render the table
+    }
 
-    if (tableJSON[1].data.length === 0) {
+    if (tableJSON[1].originalDataSource.length === 0) {
       checkAll.checked = false;
     }
+    //even after deleting also we need to call pagination method to adjust the pages
+    pagination(tableJSON[1].originalDataSource);
   }
   //after deleting again disable it
   deleteSelectedButton.disabled = true;
-
-  //even after deleting also we need to call pagination method to adjust the pages
-  pagination();
 });
 
 //filtering rows on button click
@@ -619,14 +662,16 @@ searchButton.addEventListener("click", () => {
   // Loop through each row
   for (let i = 0; i < rows.length; i++) {
     // Backup the original data before filtering (if not already backed up)
-    if (!tableJSON[1].originalData) {
-      tableJSON[1].originalData = [...tableJSON[1].data]; // Copy the original data
+    if (!tableJSON[1].FilteredDatasource) {
+      tableJSON[1].FilteredDatasource = [...tableJSON[1].originalDataSource]; // Copy the original data
     }
 
-    const filtered_data = tableJSON[1].data.filter((_, index) =>
-      tableJSON[1].data[index][dropValue].toLowerCase().includes(inputValue)
+    const filtered_data = tableJSON[1].FilteredDatasource.filter((_, index) =>
+      tableJSON[1].FilteredDatasource[index][dropValue]
+        .toLowerCase()
+        .includes(inputValue)
     );
-    tableJSON[1].data = filtered_data;
+    tableJSON[1].FilteredDatasource = filtered_data;
 
     ////////////////////////////
     //when we filter, if we are in another page, we need to move to page 0.
@@ -640,8 +685,8 @@ searchButton.addEventListener("click", () => {
     const firstElement = pageNumbers.firstElementChild;
     firstElement.classList.add("active");
     ////////////////////////
-    renderTable();
-    pagination();
+    renderTable(tableJSON[1].FilteredDatasource);
+    pagination(tableJSON[1].FilteredDatasource);
   }
 });
 
@@ -651,21 +696,21 @@ clearButton.addEventListener("click", () => {
   searchInput.value = "";
   searchButton.disabled = true;
   // Restore original data
-  tableJSON[1].data = [...tableJSON[1].originalData]; // Reassign the backup to data
+  // tableJSON[1].originalDataSource = [...tableJSON[1].FilteredDatasource]; // Reassign the backup to data
 
   //after clearing we need to clear the original data
-  delete tableJSON[1].originalData;
+  delete tableJSON[1].FilteredDatasource;
 
-  renderTable();
-  pagination();
+  renderTable(tableJSON[1].originalDataSource);
+  pagination(tableJSON[1].originalDataSource);
 });
 
 /////////////////////////////////////////////////////////////////////
 
-function pagination() {
+function pagination(data) {
   // Clear any previous pagination links
   pageNumbers.innerHTML = "";
-  let totalPages = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+  let totalPages = Math.ceil(data.length / rowsPerPage);
   for (let i = 0; i < totalPages; i++) {
     const a = document.createElement("a");
     // a.setAttribute("href", "#");
@@ -678,7 +723,7 @@ function pagination() {
     }
     pageNumbers.appendChild(a);
   }
-  addAnchorListeners();
+  addAnchorListeners(data);
   // prevAndNext();
 }
 
@@ -700,7 +745,8 @@ function addAnchorListeners() {
       currentPage = Number(anchor.id);
 
       // Re-render the table to show the selected page's data
-      renderTable();
+
+      renderTable(data);
     });
   });
 }
@@ -709,7 +755,9 @@ function addAnchorListeners() {
 const prev = document.querySelector(".prev");
 const next = document.querySelector(".next");
 function prevAndNext() {
-  const totalRows = Math.ceil(tableJSON[1].data.length / rowsPerPage);
+  const totalRows = Math.ceil(
+    tableJSON[1].originalDataSource.length / rowsPerPage
+  );
   const anchors = document.querySelectorAll(".page-numbers a");
 
   if (totalRows <= 1) {
@@ -743,7 +791,7 @@ prev.addEventListener("click", () => {
     const previousElement = currentActive.previousElementSibling;
     previousElement.classList.add("active");
     currentPage--;
-    renderTable();
+    renderTable(tableJSON[1].originalDataSource);
   }
 });
 
@@ -756,6 +804,6 @@ next.addEventListener("click", () => {
   const nextElement = currentActive.nextElementSibling;
   nextElement.classList.add("active");
   currentPage++;
-  renderTable();
+  renderTable(tableJSON[1].originalDataSource);
   // }
 });
