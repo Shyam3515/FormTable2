@@ -22,7 +22,7 @@ inputs.forEach((input) => {
 });
 
 ///////////////////////////////////////
-let rowNumber = 0;
+let rowNumber = 1;
 const empId = document.getElementById("empId");
 function empID() {
   let eId = "EMP" + String(rowNumber).padStart(3, "0");
@@ -95,6 +95,7 @@ let tableJSON = [
   },
   { originalDataSource: [] },
 ];
+let newObj;
 // tableJSON[1].data.push({ eID: empId.value });
 
 const searchInput = document.querySelector(".search-input");
@@ -394,27 +395,6 @@ function renderTable(tableData) {
 }
 
 //////////////////////delete on filter mode
-// function deleteFunction(dataID, dIndex) {
-//   //if we click on delete, updating duplicate data in filter mode
-//   if (tableJSON[1].originalData) {
-//     const filtered_data_after_delete = tableJSON[1].originalData.filter(
-//       (item, index) => item["eID"] !== dataID
-//     );
-//     tableJSON[1].originalData = filtered_data_after_delete;
-
-//     //updating deleted rows in original data aswell
-//     const mainFiltered_data_after_delete = tableJSON[1].data.filter(
-//       (item, index) => item["eID"] !== dataID
-//     );
-//     tableJSON[1].data = mainFiltered_data_after_delete;
-//   } else {
-//     //updating in the JSON's
-//     tableJSON[1].data.splice(dIndex, 1);
-//   }
-//   renderTable(); //Re-render table data
-//   pagination();
-// }
-
 function deleteFunction(dataID, dIndex) {
   //if we click on delete in filter mode, updating the deleted rows in filtered data
   //whether it is in filter mode or normal mode, deleted rows should get updated in actual JSON data always.
@@ -465,9 +445,7 @@ function addData(e) {
   const area = document.getElementById("area").value;
   const doj = document.getElementById("formattedDoj").value;
 
-  rowNumber++;
   empID();
-
   /**Overall Flow:
   The form is selected using getElementById.
   Before adding any data, the form's built-in HTML5 validation is checked using checkValidity().
@@ -479,7 +457,7 @@ function addData(e) {
     form.reportValidity(); // Highlight invalid fields
     return;
   }
-  tableJSON[1].originalDataSource.push({
+  newObj = {
     isChecked: false,
     eID: empId.value,
     fName,
@@ -487,7 +465,38 @@ function addData(e) {
     desig,
     area,
     doj,
-  });
+  };
+
+  ///////////// Duplicate checking ////////////////////
+  duplicateChecking(tableJSON[1].originalDataSource, newObj, [
+    "fName",
+    "lName",
+  ]);
+
+  function duplicateChecking(array, newObj, properties) {
+    if (array.length === 0) {
+      rowNumber++;
+      empID();
+      array.push(newObj);
+    } else {
+      if (hasDuplicate(array, newObj, properties)) {
+        alert("duplicates found on properties: Firstname and LastName");
+      } else {
+        array.push(newObj);
+        rowNumber++;
+        empID();
+      }
+    }
+  }
+
+  //checks each and every property and returns true / false
+  function hasDuplicate(array, newObj, properties) {
+    return array.some((item) =>
+      properties.some(
+        (prop) => item[prop].toLowerCase() === newObj[prop].toLowerCase()
+      )
+    );
+  }
 
   // Reset the current page to the last page (where new data is added)
   currentPage = Math.floor(
@@ -614,9 +623,9 @@ deleteSelectedButton.addEventListener("click", function () {
     if (tableJSON[1].FilteredDatasource.length === 0) {
       checkAll.checked = false;
     }
-    renderTable(tableJSON[1].FilteredDatasource);
     //even after deleting also we need to call pagination method to adjust the pages
     pagination(tableJSON[1].FilteredDatasource);
+    renderTable(tableJSON[1].FilteredDatasource);
   }
 
   if (tableJSON[1].originalDataSource.length === 0) {
@@ -727,7 +736,7 @@ function pagination(data) {
   // prevAndNext();
 }
 
-function addAnchorListeners() {
+function addAnchorListeners(data) {
   const anchors = document.querySelectorAll(".page-numbers a");
   anchors.forEach((anchor, index) => {
     anchor.addEventListener("click", (e) => {
